@@ -1,6 +1,5 @@
-
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings  # Gives access to AUTH_USER_MODEL
 
 class Service(models.Model):
     SERVICE_TYPES = [
@@ -17,26 +16,33 @@ class Service(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     location = models.CharField(max_length=100)
     available = models.BooleanField(default=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # updated
 
     def __str__(self):
         return self.name
 
+
 class Booking(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # updated
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
-    status = models.CharField(max_length=20, default='pending', 
-                            choices=[('pending', 'Pending'), 
-                                   ('confirmed', 'Confirmed'),
-                                   ('completed', 'Completed'),
-                                   ('cancelled', 'Cancelled')])
+    status = models.CharField(
+        max_length=20, 
+        default='pending', 
+        choices=[
+            ('pending', 'Pending'), 
+            ('confirmed', 'Confirmed'),
+            ('completed', 'Completed'),
+            ('cancelled', 'Cancelled')
+        ]
+    )
     otp = models.CharField(max_length=6, blank=True, null=True)
     otp_verified = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.username} - {self.service.name}"
+        return f"{self.user.email} - {self.service.name}"
+
 
 class Review(models.Model):
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE)

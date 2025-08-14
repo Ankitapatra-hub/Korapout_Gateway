@@ -1,25 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 from .forms import BookingForm
 from .models import Service, Booking
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import random
 
-@login_required
-def book_vehicle(request):
-    if request.method == 'POST':
-        form = BookingForm(request.POST)
-        if form.is_valid():
-            booking = form.save(commit=False)
-            booking.user = request.user
-            booking.otp = str(random.randint(100000, 999999))
-            booking.save()
-            return render(request, 'planner/thank_you.html', {'booking': booking})
-    else:
-        form = BookingForm()
-    return render(request, 'planner/book_vehicle.html', {'form': form})
-
+# Public view: anyone can see available services
 @csrf_exempt
 def services(request):
     if request.method == 'GET':
@@ -37,7 +25,22 @@ def services(request):
         } for s in services]
         return JsonResponse(data, safe=False)
 
-@login_required
+#@login_required(login_url='/login/')
+def book_vehicle(request):
+    if request.method == 'POST':
+        form = BookingForm(request.POST)
+        if form.is_valid():
+            booking = form.save(commit=False)
+            booking.user = request.user
+            booking.otp = str(random.randint(100000, 999999))
+            booking.save()
+            return render(request, 'planner/thank_you.html', {'booking': booking})
+    else:
+        form = BookingForm()
+    return render(request, 'planner/book_vehicle.html', {'form': form})
+
+
+@login_required(login_url='/login/')
 @csrf_exempt
 def create_booking(request):
     if request.method == 'POST':
@@ -62,7 +65,7 @@ def create_booking(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
-@login_required
+@login_required(login_url='/login/')
 def verify_otp(request):
     if request.method == 'POST':
         booking_id = request.POST.get('booking_id')
@@ -78,3 +81,8 @@ def verify_otp(request):
             return JsonResponse({'success': False, 'error': 'Invalid OTP'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
+        
+
+def home(request):
+    return render(request, 'planner/home.html')  # Create this template
+
